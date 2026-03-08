@@ -1,0 +1,11 @@
+{
+    "version": 0,
+    "sources": {
+        "manual": {
+            "root": "https://lean-lang.org/doc/reference/latest/",
+            "updateFrequency": "manual",
+            "shortName": "latest",
+            "longName": "Lean Language Reference"
+        }
+    }
+}
