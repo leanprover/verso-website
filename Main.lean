@@ -15,6 +15,11 @@ def theme : Theme := { Theme.default with
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
           <title>"Verso — Written in Lean, checked by Lean"</title>
           <link rel="stylesheet" href="/static/style.css"/>
+          <link rel="stylesheet" href= "/static/glightbox/css/glightbox.min.css"/>
+          <script src="/static/glightbox/js/glightbox.min.js"></script>
+          <script defer>
+            r!"document.addEventListener('DOMContentLoaded', () => { const lightbox = GLightbox(); });"
+          </script>
           {{← builtinHeader }}
         </head>
         <body>
@@ -32,12 +37,7 @@ def theme : Theme := { Theme.default with
           <main>
             {{← param "content" }}
           </main>
-          <div class="lightbox-overlay" id="lightbox">
-            <img src="" alt=""/>
-          </div>
-          <script>
-            {{.text false "document.addEventListener('DOMContentLoaded', () => {\n  const lb = document.getElementById('lightbox');\n  const lbImg = lb.querySelector('img');\n  document.querySelectorAll('.pillar img').forEach(img => {\n    img.addEventListener('click', () => {\n      lbImg.src = img.src;\n      lbImg.alt = img.alt;\n      lb.classList.add('active');\n    });\n  });\n  lb.addEventListener('click', () => lb.classList.remove('active'));\n  document.addEventListener('keydown', e => {\n    if (e.key === 'Escape') lb.classList.remove('active');\n  });\n});"}}
-          </script>
+
           <script>
             {{.text false "window.addEventListener('load', () => {\n  if (typeof tippy === 'undefined') return;\n  document.querySelectorAll('.verso-source [data-tooltip]').forEach(el => {\n    el.setAttribute('data-tippy-theme', 'lean');\n  });\n  tippy('.verso-source [data-tooltip]', {\n    content(el) {\n      var raw = el.getAttribute('data-tooltip');\n      if (typeof marked !== 'undefined') {\n        var div = document.createElement('div');\n        div.classList.add('hover-info');\n        div.innerHTML = marked.parse(raw);\n        return div;\n      }\n      return raw;\n    },\n    allowHTML: true,\n    theme: 'lean',\n    placement: 'top',\n    delay: [100, null],\n    appendTo: () => document.body\n  });\n});"}}
           </script>

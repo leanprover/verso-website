@@ -71,13 +71,7 @@ theorem cantor (f : S → Set S) : ¬ Surjective f := by
 
 Verso files are Lean files. While writing, you get the full IDE experience, including autocomplete, error checking, go-to-definition, and tactic states. Readers get the same richness: rendered pages include proof states, hover information, and clickable links to documentation.
 
-![A screenshot showing proof states and hover info](static/interactive.png)
-
-:::htmlDiv (class := "placeholder-img")
-
-VS Code screenshot: proof states and hover info
-
-:::
+{lightbox (alt:="A screenshot showing proof states and hover info") (full := "static/interactive.png") (thumb := "static/interactive-thumb.png")}[]
 
 ::::
 
