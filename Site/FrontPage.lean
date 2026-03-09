@@ -30,24 +30,21 @@ The Verso code and its rendering on the front page are produced automatically fr
 ```
 
 ````versoSource
-The type of all predicates over a type is that type's _powerset_.
-Elements of one of these subsets satisfy the predicate:
+The type of all predicates over a type is that type's _powerset_. Elements of one of these subsets satisfy the predicate:
 ```lean
-def Set (α : Type u) : Type u := α → Prop
+def Set (α : Type u) : Type u :=
+  α → Prop
 
 instance : Membership α (Set α) where
   mem xs x := xs x
 ```
-A function $`f` is surjective if each element of the range is covered
-by an element of the domain:
+A function $`f` is surjective if each element of the range is covered by an element of the domain:
 ```lean
-def Surjective (f : α → β) := ∀ y, ∃ x, f x = y
+def Surjective (f : α → β) :=
+  ∀ y, ∃ x, f x = y
 ```
 :::theorem "Cantor"
-Given a function $`f ∈ S → \mathcal{P}(S)`, [Cantor's diagonal
-argument](https://en.wikipedia.org/wiki/Cantor%27s_diagonal_argument)
-involves the diagonal set $`\{x ∈ S \mid x \not\in f(x)\}`.
-The {tactic}`grind` tactic takes care of many reasoning steps:
+Given a function $`f ∈ S → \mathcal{P}(S)`, [Cantor's diagonal argument](https://en.wikipedia.org/wiki/Cantor%27s_diagonal_argument) involves the diagonal set $`\{x ∈ S \mid x \not\in f(x)\}`. The {tactic}`grind` tactic takes care of many reasoning steps:
 ```lean
 theorem cantor (f : S → Set S) : ¬ Surjective f := by
   intro h
@@ -63,7 +60,7 @@ theorem cantor (f : S → Set S) : ¬ Surjective f := by
 
 ::::
 
-:::::htmlDiv (class := "pillars")
+:::::html div (class := "pillars") (id := "why-verso")
 
 ::::htmlDiv (class := "pillar")
 
@@ -98,7 +95,7 @@ Built on Lean and Lake. Verso uses a lightweight Markdown-like markup language w
 
 :::::
 
-::::::htmlDiv (class := "builds")
+::::::html div (class := "builds") (id := "what-to-build")
 
 *What Can You Build?*
 
@@ -152,7 +149,7 @@ Verso's genre system is extensible: you can define new document types with custo
 
 ::::::
 
-::::::htmlDiv (class := "showcase")
+::::::html div (class := "showcase") (id := "showcase")
 
 *Built with Verso*
 

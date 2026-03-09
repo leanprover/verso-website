@@ -28,6 +28,11 @@ def theme : Theme := { Theme.default with
               <div class="nav-inner">
                 <a class="logo" href="/">"Verso"</a>
                 <div class="nav-links">
+                  <a href="#why-verso">"Why Verso?"</a>
+                  <a href="#what-to-build">"Applications"</a>
+                  <a href="#showcase">"Built with Verso"</a>
+                  <a href="#get-started">"Get Started"</a>
+                  <span class="divider">" | "</span>
                   <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
                   <a href="https://github.com/leanprover/verso">"GitHub"</a>
                 </div>
