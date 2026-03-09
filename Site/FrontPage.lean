@@ -14,9 +14,9 @@ open Site
 
 #doc (Page) "Verso" =>
 
-::::htmlDiv (class := "hero")
+::::::htmlDiv (class := "hero")
 
-:::htmlDiv (class := "hero-text")
+:::::htmlDiv (class := "hero-text")
 
 Verso
 
@@ -26,9 +26,21 @@ Verso is a platform for writing documents, books, course materials, and websites
 Every code example is type-checked. Every rendered page is interactive. And it's all
 built on the tools you already use.
 
-[Get Started with Templates »](https://github.com/leanprover/verso-templates)
-
+::::html a (class := "hero-btn primary") (href := "https://github.com/leanprover/verso-templates")
+:::html img (src := "/static/arrow.svg") (alt := "") (width := "20") (height := "20")
 :::
+Get Started
+::::
+
+::::html a (class := "hero-btn secondary") (href := "https://verso-user-manual.netlify.app/")
+:::html img (src := "/static/book.svg") (alt := "") (width := "20") (height := "20")
+:::
+User Manual
+::::
+
+:::::
+
+
 
 ```comment
 The Verso code and its rendering on the front page are produced automatically from this code block.
@@ -63,7 +75,7 @@ theorem cantor (f : S → Set S) : ¬ Surjective f := by
 :::
 ````
 
-::::
+::::::
 
 :::::html div (class := "pillars") (id := "why-verso")
 
@@ -214,38 +226,28 @@ This page is built in Verso.
 
 ::::::html div (id := "get-started") (class := "get-started")
 
-*Ready to try Verso?*
+*Try Verso*
 
-:::::htmlDiv (class := "get-started-links")
+Verso lets you write rich, correct, and interactive documents with Lean. Whether you're starting a new textbook, blog, or reference manual, now is a great time to begin.
 
-::::htmlDiv (class := "get-started-item")
+:::::htmlDiv (class := "cta-buttons")
 
-*Templates*
-
-Start from a template for a textbook or blog.
-
-[Get Started»](https://github.com/leanprover/verso-templates)
-
+::::html a (class := "cta-btn primary") (href := "https://github.com/leanprover/verso-templates")
+:::html img (src := "/static/arrow.svg") (alt := "") (width := "20") (height := "20")
+:::
+Get Started
 ::::
 
-::::htmlDiv (class := "get-started-item")
-
-*User Manual*
-
-Learn how Verso works.
-
-[Read the manual»](https://verso-user-manual.netlify.app/)
-
+::::html a (class := "cta-btn secondary") (href := "https://verso-user-manual.netlify.app/")
+:::html img (src := "/static/book.svg") (alt := "") (width := "20") (height := "20")
+:::
+User Manual
 ::::
 
-::::htmlDiv (class := "get-started-item")
-
-*Community*
-
-Ask questions and share what you're building in the Verso channel on the Lean community Zulip.
-
-[Join Zulip»](https://leanprover.zulipchat.com/#narrow/channel/576452-verso)
-
+::::html a (class := "cta-btn secondary") (href := "https://leanprover.zulipchat.com/#narrow/channel/576452-verso")
+:::html img (src := "/static/zulip.svg") (alt := "") (width := "20") (height := "20")
+:::
+Join Zulip
 ::::
 
 :::::

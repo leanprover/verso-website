@@ -39,7 +39,9 @@ def theme : Theme := { Theme.default with
                   <a href="#get-started">"Get Started"</a>
                   <span class="divider">" | "</span>
                   <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
-                  <a href="https://github.com/leanprover/verso">"GitHub"</a>
+                  <a href="https://github.com/leanprover/verso" aria-label="GitHub" target="_blank">
+                    <img src="/static/github.svg" alt="GitHub" width="22" height="22"/>
+                  </a>
                 </div>
               </div>
             </nav>
@@ -53,11 +55,26 @@ def theme : Theme := { Theme.default with
           </script>
           <footer>
             <div class="footer-inner">
-              <a href="https://github.com/leanprover/verso">"GitHub"</a>
-              " · "
-              <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
-              " · "
-              <a href="https://leanprover.zulipchat.com/">"Zulip"</a>
+              <div class="footer-columns">
+                <div class="footer-col">
+                  <h4>"Get Started"</h4>
+                  <a href="https://github.com/leanprover/verso-templates">"Templates"</a>
+                  <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
+                  <a href="https://leanprover.zulipchat.com/#narrow/channel/576452-verso">"Community"</a>
+                </div>
+                <div class="footer-col">
+                  <h4>"Documentation"</h4>
+                  <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
+                  <a href="https://github.com/leanprover/verso">"Source Code"</a>
+                </div>
+                <div class="footer-col">
+                  <h4>"Resources"</h4>
+                  <a href="https://lean-lang.org/">"Lean"</a>
+                  <a href="https://leanprover.zulipchat.com/">"Zulip"</a>
+                  <a href="https://github.com/leanprover/verso">"GitHub"</a>
+                </div>
+              </div>
+              <p class="footer-copy">"© 2026 Lean FRO, LLC"</p>
             </div>
           </footer>
         </body>
