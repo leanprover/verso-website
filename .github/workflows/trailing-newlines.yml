@@ -1,0 +1,26 @@
+name: Check for trailing newlines
+
+on: [pull_request, merge_group]
+
+jobs:
+    check-trailing-newlines:
+        name: Check text files have trailing newlines
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Check for trailing newlines
+              run: |
+                  bad=()
+                  while IFS= read -r -d '' f; do
+                    if [ -s "$f" ] && [ "$(tail -c1 "$f" | wc -l)" -eq 0 ]; then
+                      bad+=("$f")
+                    fi
+                  done < <(git ls-files -z -- '*.lean' '*.toml' '*.yml' '*.yaml' '*.md' '*.css' '*.json')
+                  if [ ${#bad[@]} -gt 0 ]; then
+                    echo "The following files are missing a trailing newline:"
+                    printf '  %s\n' "${bad[@]}"
+                    exit 1
+                  else
+                    echo "All text files have trailing newlines."
+                  fi

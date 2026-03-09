@@ -1,4 +1,9 @@
 /-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: David Thrane Christiansen
+-/
+/-
 Tactic role: links tactic names to the Lean Language Reference.
 Uses MultiVerso cross-referencing to resolve URLs at traversal time.
 -/

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    merge_group:
+
+jobs:
+    build:
+        name: Build and generate HTML
+        runs-on: ubuntu-latest
+        steps:
+            - name: Install elan
+              run: |
+                  set -o pipefail
+                  curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+                  ./elan-init -y --default-toolchain none
+                  echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+            - uses: actions/checkout@v6
+
+            - name: Compute short SHA
+              id: shortSHA
+              run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache .lake
+              uses: actions/cache@v5
+              with:
+                  path: .lake
+                  key:
+                      ${{ runner.os }}-${{ hashFiles('lake-manifest.json') }}-${{
+                      hashFiles('lean-toolchain') }}-${{ steps.shortSHA.outputs.short_sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-${{ hashFiles('lake-manifest.json') }}-${{ hashFiles('lean-toolchain') }}-
+
+            - name: Lean version
+              run: lean --version
+
+            - name: Build
+              run: lake build
+
+            - name: Generate HTML
+              run: lake exe generate-site
+
+            - name: Upload site artifact
+              uses: actions/upload-artifact@v7
+              with:
+                  name: site
+                  path: _site

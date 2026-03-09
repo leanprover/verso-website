@@ -1,0 +1,7 @@
+lake-manifest.json
+.lake
+_site
+.verso
+
+# Vendored files
+static_files/glightbox

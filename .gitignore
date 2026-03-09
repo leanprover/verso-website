@@ -3,3 +3,4 @@ lake-packages/
 lake-manifest.json
 html/
 _site/
+.DS_Store

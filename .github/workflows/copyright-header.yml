@@ -1,0 +1,25 @@
+name: Check for copyright header
+
+on: [pull_request, merge_group]
+
+jobs:
+    check-copyright:
+        name: Check copyright header
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Verify .lean files start with a copyright header
+              run: |
+                  FILES=$(find . -path ./.lake -prune -o -name "*.lean" -type f -print | while read -r f; do
+                    if ! head -1 "$f" | grep -q '^/-'; then
+                      echo "$f"
+                    fi
+                  done)
+                  if [ -n "$FILES" ]; then
+                    echo "Found .lean files without a copyright header (expected /- comment at start):"
+                    echo "$FILES"
+                    exit 1
+                  else
+                    echo "All .lean files have copyright headers."
+                  fi
