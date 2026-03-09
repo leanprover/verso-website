@@ -17,7 +17,7 @@ Verso
 
 Written in Lean. Checked by Lean.
 
-Verso is a platform for writing documents, books, course materials, and websites with Lean.
+Verso is a platform for writing documents, books, course materials, and websites with [Lean](https://lean-lang.org).
 Every code example is type-checked. Every rendered page is interactive. And it's all
 built on the tools you already use.
 
@@ -81,11 +81,7 @@ Verso files are Lean files. While writing, you get the full IDE experience, incl
 
 Verso helps you catch mistakes while writing, not after publishing. Every code example is checked by Lean as part of the build. If a described behavior doesn't match reality, you find out immediately. The Lean Reference Manual uses this to stay up to date with the latest developments.
 
-:::htmlDiv (class := "placeholder-img")
-
-VS Code screenshot: inline error caught during authoring
-
-:::
+{lightbox (alt := "A screenshot showing a #guard_msgs test that fails in text") (full := "static/correct.png") (thumb := "static/correct-thumb.png")}[]
 
 ::::
 
@@ -93,13 +89,10 @@ VS Code screenshot: inline error caught during authoring
 
 *Integrated*
 
-Built on Lean and Lake. Verso uses a lightweight Markdown-like markup language with a built-in extension mechanism. Extensions are ordinary Lean functions — not a separate plugin system or templating language. Syntax highlighting uses Lean's actual parser, so it's always accurate.
+Built on Lean and Lake. Verso uses a lightweight Markdown-like markup language with a built-in extension mechanism. Extensions are ordinary Lean functions, not a separate plugin system or templating language. Syntax highlighting uses Lean's actual parser, so it's always accurate.
 
-:::htmlDiv (class := "placeholder-img")
+{lightbox (alt := "A screenshot showing a Verso extension") (full := "static/integration.png") (thumb := "static/integration-thumb.png")}[]
 
-Code snippet: custom directive defined as a Lean function
-
-:::
 
 ::::
 
@@ -109,7 +102,9 @@ Code snippet: custom directive defined as a Lean function
 
 *What Can You Build?*
 
-Verso's genre system provides a shared foundation for rendering, cross-referencing, and code integration. Each genre builds on common infrastructure, so improvements to one benefit all. The set of genres is extensible.
+Verso's provides a shared foundation for rendering, cross-referencing, and code integration, without requiring a single core model that only really fits one kind of document.
+Different kinds of documents are called _genres_.
+Each genre builds on common infrastructure, so improvements to one benefit all, and anyone can implement a new genre.
 
 :::::htmlDiv (class := "build-cards")
 
@@ -133,7 +128,7 @@ Structured educational material with worked examples
 
 *Websites & Blogs*
 
-Project homepages, landing pages, and posts with integrated Lean code
+A static site generator for project homepages, landing pages, and blog posts with integrated Lean code
 
 ::::
 
@@ -147,9 +142,9 @@ Plans for large-scale formalization projects
 
 ::::htmlDiv (class := "build-card")
 
-*Your Genre Here*
+*Your Document Here*
 
-Verso's genre system is extensible — define new document types with custom rendering and cross-referencing
+Verso's genre system is extensible: you can define new document types with custom rendering and cross-referencing
 
 ::::
 
@@ -199,7 +194,15 @@ A hands-on guide to programming in Lean
 
 [*Analysis I*](https://teorth.github.io/analysis/)
 
-Terry Tao's Analysis I — a Lean companion
+Terry Tao's _Analysis I: a Lean Companion_
+
+::::
+
+::::htmlDiv (class := "showcase-card website")
+
+[*This Very Page*](https://github.com/TODO)
+
+This page is built in Verso.
 
 ::::
 
@@ -219,7 +222,7 @@ Terry Tao's Analysis I — a Lean companion
 
 Start from a template for a textbook or blog.
 
-[Browse templates](https://github.com/leanprover/verso-templates)
+[Get Started»](https://github.com/leanprover/verso-templates)
 
 ::::
 
@@ -229,7 +232,7 @@ Start from a template for a textbook or blog.
 
 Learn how Verso works.
 
-[Read the manual](https://verso-user-manual.netlify.app/)
+[Read the manual»](https://verso-user-manual.netlify.app/)
 
 ::::
 
@@ -237,9 +240,9 @@ Learn how Verso works.
 
 *Community*
 
-Ask questions and share what you're building.
+Ask questions and share what you're building in the Verso channel on the Lean community Zulip.
 
-[Join the Zulip](https://leanprover.zulipchat.com/)
+[Join Zulip»](https://leanprover.zulipchat.com/#narrow/channel/576452-verso)
 
 ::::
 

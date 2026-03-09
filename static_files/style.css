@@ -493,7 +493,11 @@ article > h1:first-child {
 
 .build-card:last-child {
   border-style: dashed;
-  background: transparent;
+  border-color: #999;
+}
+
+.build-card:last-child strong {
+  font-style: italic;
 }
 
 /* Showcase */

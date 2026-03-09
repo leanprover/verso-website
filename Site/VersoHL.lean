@@ -23,6 +23,14 @@ open SubVerso.Highlighting
 
 namespace Site
 
+def codeSeq [Monad m] [MonadError m] (xs : TSyntaxArray `inline) : m (Array StrLit) := do
+  xs.filterMapM fun
+    | `(inline|code($s)) => pure (some s)
+    | `(inline|$s:str) =>
+      if s.getString.all (·.isWhitespace) then pure none
+      else throwErrorAt s "Expected code"
+    | i => throwErrorAt i "Expected code"
+
 /-- CSS class and hover tooltip for a Verso syntax node kind. -/
 def versoTokenInfo : SyntaxNodeKind → Option (String × String)
   | ``header => some ("verso-header", "A section header that creates document structure")
@@ -153,7 +161,7 @@ where
     .seq parts
 
 /-- Elaborate Lean source code as commands and return SubVerso-highlighted output. -/
-private def elabAndHighlightLean (src : StrLit) : DocElabM (TSyntax `term) := withoutAsync do
+private def elabAndHighlightLean («show» : Bool) (src : StrLit) : DocElabM (TSyntax `term) := withoutAsync do
   let scope : Command.Scope := {
     header := "",
     opts := pp.tagAppFns.set (Elab.async.set (← getOptions) false) true,
@@ -223,9 +231,12 @@ private def elabAndHighlightLean (src : StrLit) : DocElabM (TSyntax `term) := wi
   setEnv cmdState.env
   for t in cmdState.infoState.trees do pushInfoTree t
 
-  let optsStx ← ``(Verso.Genre.Blog.CodeOpts.mk $(quote `anonymous) true)
-  ``(Block.other (Verso.Genre.Blog.BlockExt.highlightedCode $optsStx $(quote hls))
-    #[Block.code $(quote <| pos.extract srcStr pos')])
+  if «show» then
+    let optsStx ← ``(Verso.Genre.Blog.CodeOpts.mk $(quote `anonymous) true)
+    ``(Block.other (Verso.Genre.Blog.BlockExt.highlightedCode $optsStx $(quote hls))
+      #[Block.code $(quote <| pos.extract srcStr pos')])
+  else
+    ``(Block.empty)
 
 /-- Collect CustomHover entries from an info tree. -/
 private partial def collectCustomHovers (tree : Lean.Elab.InfoTree) :
@@ -305,11 +316,17 @@ def «theorem» : DirectiveExpanderOf TheoremArgs
   | { name }, blocks => do
     ``(theoremC $(quote name) #[$(← blocks.mapM elabBlock),*])
 
+structure LeanArgs where
+  «show» : Bool
+
+instance : ArgParse.FromArgs LeanArgs m where
+  fromArgs := LeanArgs.mk <$> .flag `show true
+
 open Verso.Genre.Blog in
 /-- Elaborates and highlights Lean code in the current module context. -/
 @[code_block]
-def lean : CodeBlockExpanderOf NoArgs
-  | ⟨⟩, str => elabAndHighlightLean str
+def lean : CodeBlockExpanderOf LeanArgs
+  | { «show» }, str => elabAndHighlightLean «show» str
 end Site
 
 open Site in
