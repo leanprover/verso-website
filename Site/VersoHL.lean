@@ -28,13 +28,23 @@ open SubVerso.Highlighting
 
 namespace Site
 
-def codeSeq [Monad m] [MonadError m] (xs : TSyntaxArray `inline) : m (Array StrLit) := do
+/--
+Extracts a sequence of code elements from a sequence of inline elements, discarding whitespace.
+
+Logs an error if there are non-code elements.
+-/
+def codeSeq [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m] [MonadError m] (xs : TSyntaxArray `inline) : m (Array StrLit) := do
   xs.filterMapM fun
     | `(inline|code($s)) => pure (some s)
-    | `(inline|$s:str) =>
-      if s.getString.all (·.isWhitespace) then pure none
-      else throwErrorAt s "Expected code"
-    | i => throwErrorAt i "Expected code"
+    | `(inline|$s:str) => do
+      if s.getString.all (·.isWhitespace) then
+        pure none
+      else
+        logErrorAt s "Expected code"
+        pure none
+    | i => do
+      logErrorAt i "Expected code"
+      pure none
 
 /-- CSS class and hover tooltip for a Verso syntax node kind. -/
 def versoTokenInfo : SyntaxNodeKind → Option (String × String)
@@ -66,8 +76,10 @@ private def styledSpan (text : String) : Option (String × String) → Output.Ht
   | some (cls, tip) => {{ <span class={{cls}} data-tooltip={{tip}}>{{text}}</span> }}
   | none => text
 
-/-- Render a syntax tree as highlighted HTML, building nesting directly from the tree structure.
-    Walks the syntax tree and source string together, emitting gap text between positioned nodes. -/
+/--
+Renders a Verso syntax tree as highlighted HTML, building nesting directly from the tree structure.
+Walks the syntax tree and source string together, emitting gap text between positioned nodes.
+-/
 private partial def renderSource (src : String) (stx : Syntax)
     (hoverMap : Std.HashMap String.Pos.Raw String)
     (ancestorInfo : Option (String × String) := none) : Output.Html :=
@@ -295,12 +307,16 @@ def highlightVersoSource (src : StrLit) : DocElabM (TSyntax `term) := do
     ``(Block.other (Verso.Genre.Blog.BlockExt.htmlDiv "verso-output-panel")
       #[$[$outputBlocks],*])
   ``(Block.other (Verso.Genre.Blog.BlockExt.htmlDiv "verso-demo") #[$sourcePanel, $outputPanel])
+end Site
+
+open Site
+open Verso.Genre.Blog
+open ArgParse
 
 structure TheoremArgs where
   name : String
 
 section
-open ArgParse
 variable {m} [Monad m] [MonadError m]
 
 instance : FromArgs TheoremArgs m where
@@ -327,15 +343,11 @@ structure LeanArgs where
 instance : ArgParse.FromArgs LeanArgs m where
   fromArgs := LeanArgs.mk <$> .flag `show true
 
-open Verso.Genre.Blog in
 /-- Elaborates and highlights Lean code in the current module context. -/
 @[code_block]
 def lean : CodeBlockExpanderOf LeanArgs
   | { «show» }, str => elabAndHighlightLean «show» str
-end Site
 
-open Site in
-open Verso.Genre.Blog in
 /--
 The `versoSource` code block renders both the Verso code and its output.
 -/
@@ -343,9 +355,7 @@ The `versoSource` code block renders both the Verso code and its output.
 def versoSource : CodeBlockExpanderOf NoArgs
   | ⟨⟩, str => highlightVersoSource str
 
-open Site in
-open Verso.Genre.Blog in
 /-- The contents are ignored. -/
 @[code_block]
 def comment : CodeBlockExpanderOf NoArgs
-  | _, _ => `(Block.empty)
+  | _, _ => ``(Block.empty)
