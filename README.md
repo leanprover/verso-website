@@ -27,6 +27,10 @@ view correctly:
 cd _site && python3 -m http.server
 ```
 
+## Deployment
+
+Pushing to `main` automatically triggers a deployment of the website.
+
 ## Development
 
 ### Formatting
