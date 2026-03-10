@@ -48,3 +48,36 @@ jobs:
               with:
                   name: site
                   path: _site
+
+            - name: Upload site for PR deployment
+              if: github.event_name == 'pull_request'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: site-for-deploy
+                  path: _site
+                  retention-days: 1
+
+            - id: deploy-info
+              name: Compute deployment metadata
+              if: github.event_name != 'pull_request'
+              run: |
+                  set -e
+                  echo "message=$(git log -1 --pretty=format:"%s")" >> "$GITHUB_OUTPUT"
+
+            - name: Deploy to Netlify
+              id: deploy
+              uses: nwtgck/actions-netlify@v3.0
+              if: github.event_name == 'push' && github.ref_name == 'main'
+              with:
+                  publish-dir: _site
+                  production-branch: main
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  alias: ref-${{ github.ref_name }}
+                  deploy-message:
+                      "ref/${{ github.ref_name }}: ${{ steps.deploy-info.outputs.message }}"
+                  enable-commit-comment: false
+                  github-deployment-environment: verso-website-main
+                  fails-without-credentials: true
+              env:
+                  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+                  NETLIFY_SITE_ID: "ffb7148a-a950-4fd1-9f49-758a8416bdbb"

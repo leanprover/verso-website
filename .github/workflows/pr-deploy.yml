@@ -1,0 +1,62 @@
+name: Deploy PR Preview
+
+on:
+    workflow_run:
+        workflows: ["CI"]
+        types:
+            - completed
+
+jobs:
+    deploy:
+        name: Deploy PR preview to Netlify
+        runs-on: ubuntu-latest
+        # Only run when:
+        # - The triggering workflow succeeded
+        # - The triggering event was a pull_request
+        # - We're in the official repository (not a fork)
+        if: >
+            github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event ==
+            'pull_request' && github.repository == 'leanprover/verso-website'
+        steps:
+            - name: Get PR information
+              uses: potiuk/get-workflow-origin@v1_1
+              id: pr-info
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  sourceRunId: ${{ github.event.workflow_run.id }}
+
+            - name: Download site artifact
+              uses: dawidd6/action-download-artifact@v14
+              with:
+                  run_id: ${{ github.event.workflow_run.id }}
+                  name: site-for-deploy
+                  path: site
+                  allow_forks: true
+
+            - name: Deploy to Netlify
+              id: netlify
+              uses: nwtgck/actions-netlify@v3.0
+              with:
+                  publish-dir: site
+                  production-branch: main
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  alias: pr-${{ steps.pr-info.outputs.pullRequestNumber }}
+                  deploy-message:
+                      "pr#${{ steps.pr-info.outputs.pullRequestNumber }}: ${{
+                      steps.pr-info.outputs.pullRequestTitle }}"
+                  enable-commit-comment: false
+                  enable-pull-request-comment: false
+                  github-deployment-environment: pr-#${{ steps.pr-info.outputs.pullRequestNumber }}
+                  fails-without-credentials: true
+              env:
+                  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+                  NETLIFY_SITE_ID: "ffb7148a-a950-4fd1-9f49-758a8416bdbb"
+
+            - name: Post deployment comment on PR
+              uses: marocchino/sticky-pull-request-comment@v2
+              with:
+                  number: ${{ steps.pr-info.outputs.pullRequestNumber }}
+                  header: netlify-preview
+                  recreate: true
+                  message: |
+                      [Preview for this PR](${{ steps.netlify.outputs.deploy-url }}) is ready! :tada:
