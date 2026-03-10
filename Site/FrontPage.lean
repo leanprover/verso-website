@@ -32,7 +32,7 @@ built on the tools you already use.
 Get Started
 ::::
 
-::::html a (class := "hero-btn secondary") (href := "https://verso-user-manual.netlify.app/")
+::::html a (class := "hero-btn secondary") (href := "/doc/latest")
 :::html img (src := "/static/book.svg") (alt := "") (width := "20") (height := "20")
 :::
 User Manual
@@ -238,7 +238,7 @@ Verso lets you write rich, correct, and interactive documents with Lean. Whether
 Get Started
 ::::
 
-::::html a (class := "cta-btn secondary") (href := "https://verso-user-manual.netlify.app/")
+::::html a (class := "cta-btn secondary") (href := "/doc/latest")
 :::html img (src := "/static/book.svg") (alt := "") (width := "20") (height := "20")
 :::
 User Manual
