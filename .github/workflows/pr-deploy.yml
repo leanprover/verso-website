@@ -46,8 +46,7 @@ jobs:
                       steps.pr-info.outputs.pullRequestTitle }}"
                   enable-commit-comment: false
                   enable-pull-request-comment: false
-                  github-deployment-environment:
-                      pr-#${{ steps.pr-info.outputs.pullRequestNumber }}
+                  github-deployment-environment: pr-#${{ steps.pr-info.outputs.pullRequestNumber }}
                   fails-without-credentials: true
               env:
                   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
