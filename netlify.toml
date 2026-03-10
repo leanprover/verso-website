@@ -1,0 +1,5 @@
+# Serve the Verso manual under /doc
+[[redirects]]
+from = "/doc/*"
+to = "https://verso-manual-versions.netlify.app/:splat"
+status = 200

@@ -38,7 +38,7 @@ def theme : Theme := { Theme.default with
                   <a href="#showcase">"Built with Verso"</a>
                   <a href="#get-started">"Get Started"</a>
                   <span class="divider">" | "</span>
-                  <a href="https://verso-user-manual.netlify.app/">"User Manual"</a>
+                  <a href="/doc/latest">"User Manual"</a>
                   <a href="https://github.com/leanprover/verso" aria-label="GitHub" target="_blank">
                     <img src="/static/github.svg" alt="GitHub" width="22" height="22"/>
                   </a>
@@ -84,6 +84,7 @@ def theme : Theme := { Theme.default with
 
 def versoSite : Site := site Site.FrontPage /
   static "static" ← "static_files"
+  static "netlify.toml" ← "netlify.toml"
 
 def main (args : List String) : IO UInt32 := do
   let remotes ← Verso.Multi.updateRemotes false none (fun _ => pure ())
