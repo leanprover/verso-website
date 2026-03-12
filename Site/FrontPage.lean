@@ -214,7 +214,7 @@ Terry Tao's _Analysis I: a Lean Companion_
 
 ::::htmlDiv (class := "showcase-card website")
 
-[*This Very Page*](https://github.com/TODO)
+[*This Very Page*](https://github.com/leanprover/verso-website/blob/main/Site/FrontPage.lean)
 
 This page is built in Verso.
 
