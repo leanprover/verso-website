@@ -348,12 +348,81 @@ instance : ArgParse.FromArgs LeanArgs m where
 def lean : CodeBlockExpanderOf LeanArgs
   | { «show» }, str => elabAndHighlightLean «show» str
 
+structure VersoSourceArgs where
+  linkName? : Option Ident
+
+section
+variable [Monad m] [MonadError m]
+
+instance : ArgParse.FromArgs VersoSourceArgs m where
+  fromArgs := VersoSourceArgs.mk <$> .named `linkName .ident true  "the name to use for the source position of the code"
+end
+
+/-- A saved filename and line range used for links. -/
+structure SourceLink where
+  filename : String
+  startLine : Nat
+  endLine : Nat
+deriving ToExpr, Repr
+
+def SourceLink.permalink (rev : String) (link : SourceLink) : String :=
+  s!"https://github.com/leanprover/verso-website/blob/{rev}/{link.filename}#L{link.startLine}-L{link.endLine}"
+
 /--
 The `versoSource` code block renders both the Verso code and its output.
 -/
 @[code_block]
-def versoSource : CodeBlockExpanderOf NoArgs
-  | ⟨⟩, str => highlightVersoSource str
+def versoSource : CodeBlockExpanderOf VersoSourceArgs
+  | { linkName? }, str => do
+    if let some linkName := linkName? then
+      let some range := (← getRef).getRange?
+        | throwError "Can't save source line numbers because the code has no source position"
+      let { start := { line := startLine, .. }, «end» := { line := endLine, .. } } := range.toLspRange (← getFileMap)
+      let name := (← getCurrNamespace) ++ linkName.getId
+      let fileName ← getFileName
+      let cwd ← IO.Process.getCurrentDir
+      let fileName := fileName.dropPrefix cwd.toString |>.dropPrefix "/" |>.copy
+      let link := SourceLink.mk fileName (startLine + 1) (endLine + 1)
+      addAndCompile <| .defnDecl {
+        name,
+        levelParams := [], type := .const ``SourceLink [],
+        value := toExpr link,
+        hints := .abbrev, safety := .safe
+      }
+      addConstInfo linkName name
+      Hover.addCustomHover linkName s!"The source position {repr link}"
+    highlightVersoSource str
+
+structure VersoSourceLinkArgs where
+  linkName : Ident
+
+section
+variable [Monad m] [MonadError m] [MonadLiftT CoreM m]
+
+instance : ArgParse.FromArgs VersoSourceLinkArgs m where
+  fromArgs := VersoSourceLinkArgs.mk <$> .positional `linkName .ident  "the source position of the code"
+end
+
+/--
+Links to a saved source location.
+-/
+@[role]
+def versoSourceLink : RoleExpanderOf VersoSourceLinkArgs
+  | { linkName }, contents => do
+    let linkN ← realizeGlobalConstNoOverloadWithInfo linkName
+
+    -- Type checking here gives a better error message than just emitting code
+    let ty ← Meta.inferType (← Meta.mkAppM linkN #[])
+    unless (← Meta.isDefEq ty (.const ``SourceLink [])) do
+      throwError m!"Expected `{.ofConstName linkN}` to be a `{.ofConstName ``SourceLink}`, but got a `{.ofExpr ty}`"
+
+    -- Get the current Git rev
+    let rev ← IO.Process.run { cmd := "git", args := #["rev-parse", "HEAD"] }
+    let rev := rev.trimAscii.copy
+
+    -- Use the already-resolved name rather than re-resolving
+    let linkName := mkCIdentFrom linkName.raw linkN
+    ``(Inline.link #[$(← contents.mapM elabInline),*] (SourceLink.permalink $(quote rev) $linkName))
 
 /-- The contents are ignored. -/
 @[code_block]
