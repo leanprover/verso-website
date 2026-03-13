@@ -66,7 +66,6 @@ def theme : Theme := { Theme.default with
                 <div class="footer-col">
                   <h4>"Get Started"</h4>
                   <a href="https://github.com/leanprover/verso-templates">"Templates"</a>
-                  <a href="/doc/latest">"User Manual"</a>
                   <a href="https://leanprover.zulipchat.com/#narrow/channel/576452-verso">"Community"</a>
                 </div>
                 <div class="footer-col">
