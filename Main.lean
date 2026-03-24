@@ -79,6 +79,12 @@ def theme : Theme := { Theme.default with
                   <a href="https://leanprover.zulipchat.com/">"Zulip"</a>
                   <a href="https://github.com/leanprover/verso">"GitHub"</a>
                 </div>
+                <div class="footer-col">
+                  <h4>"Policies"</h4>
+                  <a href="https://lean-lang.org/privacy">"Privacy Policy"</a>
+                  <a href="https://lean-lang.org/terms">"Terms of Use"</a>
+                  <a href="https://lean-lang.org/trademark-policy">"Lean Trademark Policy"</a>
+                </div>
               </div>
               <p class="footer-copy">"© 2026 Lean FRO, LLC"</p>
             </div>
