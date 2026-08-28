@@ -203,7 +203,7 @@ private def elabAndHighlightLean («show» : Bool) (src : StrLit) : DocElabM (TS
     maxRecDepth := ← MonadRecDepth.getMaxRecDepth,
     scopes := [scope]
   }
-  let mut pstate : Parser.ModuleParserState := { pos }
+  let mut pstate : Parser.ModuleParserState := { pos, hasLeading := false }
   let mut cmds := #[]
 
   repeat
