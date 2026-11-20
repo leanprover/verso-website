@@ -12,4 +12,6 @@ class TestKaTeX:
         expect(page.locator(".verso-output-panel code.math .katex")).to_have_count(
             math.count()
         )
-        expect(page.locator(".verso-output-panel .katex-html .base")).not_to_have_count(0)
+        expect(page.locator(".verso-output-panel .katex-html .base")).not_to_have_count(
+            0
+        )

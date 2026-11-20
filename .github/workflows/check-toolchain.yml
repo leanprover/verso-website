@@ -5,12 +5,17 @@ on:
         branches: [main]
     merge_group:
 
+permissions:
+    contents: read
+
 jobs:
     check-toolchain:
         name: Check for "nightly" in lean-toolchain
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6.1.0
+            - uses: actions/checkout@v7.0.1
+              with:
+                  persist-credentials: false
 
             - name: Check whether lean-toolchain contains nightly
               run: |

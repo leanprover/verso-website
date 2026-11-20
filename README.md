@@ -36,16 +36,25 @@ Pushing to `main` automatically triggers a deployment of the website.
 
 ## Development
 
-### Formatting
+### Formatting and Linting
 
 This project uses [Prettier](https://prettier.io/) for formatting CSS,
-Markdown, and YAML files.
+Markdown, and YAML files, [ESLint](https://eslint.org/) for
+JavaScript, and [ruff](https://docs.astral.sh/ruff/) for the Python
+browser tests. CI runs all three on pull requests, along with
+[actionlint](https://github.com/rhysd/actionlint) on the workflows.
 
 ```sh
-npm install
-npx prettier --check .
-npx prettier --write .  # to auto-fix
+npm ci
+npx --no-install prettier --check .
+npx --no-install prettier --write .  # to auto-fix
+npm run lint
+uvx ruff@0.17.6 format --check .  # the version that ruff.toml requires
+actionlint
 ```
+
+A comment `!prettier` on a pull request, from someone with write
+access, formats it with Prettier and pushes the result.
 
 ### Conventions
 
