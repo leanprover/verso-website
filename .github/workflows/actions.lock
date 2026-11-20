@@ -9,7 +9,7 @@ workflows:
     '.github/workflows/check-toolchain.yml':
         - 'actions/checkout@v7.0.1'
     '.github/workflows/ci.yml':
-        - 'actions/cache@v5.1.0'
+        - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.1'
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/setup-uv@v10.3.3'
@@ -43,9 +43,9 @@ workflows:
     '.github/workflows/trailing-newlines.yml':
         - 'actions/checkout@v7.0.1'
 dependencies:
-    'actions/cache@v5.1.0':
-        ref: 'v5.1.0'
-        commit: 'sha1-caa296126883cff596d87d8935842f9db880ef25'
+    'actions/cache@v6.1.0':
+        ref: 'v6.1.0'
+        commit: 'sha1-55cc8345863c7cc4c66a329aec7e433d2d1c52a9'
         owner_id: 44036562
         repo_id: 215566462
     'actions/checkout@v7.0.1':
