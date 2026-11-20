@@ -17,168 +17,37 @@ import Verso.Parser
 import Verso.Output.Html
 import Lean.Elab.Command
 import SubVerso.Highlighting
+import Verso.Output.Html.Markdown
 
 open Verso Doc Elab
 open Verso.Output Html
 open Lean
 open Lean.Elab
 open Verso.SyntaxUtils
-open Lean.Doc.Syntax
+open Lean.Doc (VersoCodeBlock VersoInline VersoBlock InlineView BlockView ArgView ArgValView
+  LinkView RoleView CodeBlockView DirectiveView)
 open SubVerso.Highlighting
 
 namespace Site
 
 /--
-Extracts a sequence of code elements from a sequence of inline elements, discarding whitespace.
+Extracts the contents of the code elements in a sequence of inline elements, discarding whitespace.
 
 Logs an error if there are non-code elements.
 -/
-def codeSeq [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m] [MonadError m] (xs : TSyntaxArray `inline) : m (Array StrLit) := do
-  xs.filterMapM fun
-    | `(inline|code($s)) => pure (some s)
-    | `(inline|$s:str) => do
-      if s.getString.all (·.isWhitespace) then
-        pure none
-      else
-        logErrorAt s "Expected code"
-        pure none
-    | i => do
+def codeSeq [Monad m] [MonadLog m] [AddMessageContext m] [MonadOptions m] [MonadError m] (xs : Array VersoInline) : m (Array String) := do
+  xs.filterMapM fun i => do
+    match InlineView.of i with
+    | some (.code v) => return some v.getVersoCode
+    | some (.text v) =>
+      unless v.getVersoText.all Char.isWhitespace do logErrorAt i "Expected code"
+      return none
+    | _ =>
       logErrorAt i "Expected code"
-      pure none
-
-/-- CSS class and hover tooltip for a Verso syntax node kind. -/
-def versoTokenInfo : SyntaxNodeKind → Option (String × String)
-  | ``header => some ("verso-header", "A section header that creates document structure")
-  | ``codeblock => some ("verso-codeblock", "A code block, interpreted according to the name")
-  | ``Lean.Doc.Syntax.directive => some ("verso-directive", "A directive that invokes a registered block extension")
-  | ``Lean.Doc.Syntax.role => some ("verso-role", "A role that invokes a registered inline extension")
-  | ``code => some ("verso-code", "Inline code, rendered as monospace")
-  | ``bold => some ("verso-bold", "Bold, rendered as strong text")
-  | ``emph => some ("verso-emph", "Emphasis, rendered as italics")
-  | ``link => some ("verso-link", "Hyperlink")
-  | ``image => some ("verso-image", "Image")
-  | ``blockquote => some ("verso-blockquote", "Block quote")
-  | ``inline_math => some ("verso-math", "Inline math, rendered with KaTeX")
-  | ``display_math => some ("verso-math", "Display math, rendered with KaTeX")
-  | ``metadata_block => some ("verso-metadata", "Metadata block")
-  | ``footnote => some ("verso-footnote", "Footnote definition")
-  | ``link_ref => some ("verso-link-ref", "Link reference")
-  | ``footnote_ref => some ("verso-footnote-ref", "Footnote reference")
-  | ``arg_num => some ("verso-arg", "Numeric argument")
-  | ``arg_ident => some ("verso-arg", "Named argument")
-  | ``arg_str => some ("verso-arg", "String argument")
-  | ``Lean.Doc.Syntax.flag_on => some ("verso-flag", "Boolean flag (on)")
-  | ``Lean.Doc.Syntax.flag_off => some ("verso-flag", "Boolean flag (off)")
-  | _ => none
-
-/-- Render text as an optionally-styled span. -/
-private def styledSpan (text : String) : Option (String × String) → Output.Html
-  | some (cls, tip) => {{ <span class={{cls}} data-tooltip={{tip}}>{{text}}</span> }}
-  | none => text
-
-/--
-Renders a Verso syntax tree as highlighted HTML, building nesting directly from the tree structure.
-Walks the syntax tree and source string together, emitting gap text between positioned nodes.
--/
-private partial def renderSource (src : String) (stx : Syntax)
-    (hoverMap : Std.HashMap String.Pos.Raw String)
-    (ancestorInfo : Option (String × String) := none) : Output.Html :=
-  match stx with
-  | .atom _ val =>
-    match stx.getPos?, stx.getTailPos? with
-    | some start, some stop =>
-      let text : String := start.extract src stop
-      -- Inside roles: braces get delim class
-      if ancestorInfo.map (·.1) == some "verso-role" && (val == "{" || val == "}") then
-        styledSpan text (some ("verso-role-delim", ancestorInfo.map (·.2) |>.getD ""))
-      -- Inside links: brackets/parens get delim class
-      else if ancestorInfo.map (·.1) == some "verso-link" &&
-              (val == "[" || val == "]" || val == "(" || val == ")") then
-        styledSpan text (some ("verso-link-delim", ancestorInfo.map (·.2) |>.getD ""))
-      -- Inside directives: ::: get delim class
-      else if ancestorInfo.map (·.1) == some "verso-directive" &&
-              val.trimAsciiStart.startsWith ":::" then
-        styledSpan text (some ("verso-directive-delim", ancestorInfo.map (·.2) |>.getD ""))
-      -- Inside codeblocks: fences get fence class, names get name class
-      else if ancestorInfo.map (·.1) == some "verso-codeblock" then
-        let tip := ancestorInfo.map (·.2) |>.getD ""
-        if val.trimAsciiStart.startsWith "```" then styledSpan text (some ("verso-codeblock-fence", tip))
-        else if val.all Char.isWhitespace then text
-        else styledSpan text (some ("verso-ext-name", hoverMap[start]?.getD tip))
-      else
-        -- Don't color plain text inside directives
-        let info := if ancestorInfo.map (·.1) == some "verso-directive" then none else ancestorInfo
-        if let some hoverText := hoverMap[start]? then
-          styledSpan text (some (info.map (·.1) |>.getD "", hoverText))
-        else styledSpan text info
-    | _, _ => .empty
-  | .ident .. =>
-    match stx.getPos?, stx.getTailPos? with
-    | some start, some stop =>
-      let text : String := start.extract src stop
-      if ancestorInfo.map (·.1) == some "verso-codeblock" ||
-         ancestorInfo.map (·.1) == some "verso-role" ||
-         ancestorInfo.map (·.1) == some "verso-directive" then
-        let tip := hoverMap[start]?.getD (ancestorInfo.map (·.2) |>.getD "")
-        styledSpan text (some ("verso-ext-name", tip))
-      else
-        let info := if ancestorInfo.map (·.1) == some "verso-directive" then none else ancestorInfo
-        if let some hoverText := hoverMap[start]? then
-          styledSpan text (some (info.map (·.1) |>.getD "", hoverText))
-        else styledSpan text info
-    | _, _ => .empty
-  | .node _ kind args =>
-    let info := versoTokenInfo kind |>.orElse fun () => ancestorInfo
-    -- Inline markup: single span covering the whole node
-    if kind == ``bold || kind == ``emph || kind == ``code || kind == ``inline_math then
-      match stx.getPos?, stx.getTailPos? with
-      | some start, some stop => styledSpan (start.extract src stop) info
-      | _, _ => .empty
-    -- Roles: wrapper span (hover background only) with recursive children
-    else if kind == ``Lean.Doc.Syntax.role then
-      {{ <span class="verso-role-wrap">{{renderChildren src args hoverMap info stx}}</span> }}
-    -- Links: wrapper span (hover background only) with recursive children
-    else if kind == ``link then
-      {{ <span class="verso-link-wrap">{{renderChildren src args hoverMap info stx}}</span> }}
-    -- Directives: wrapper span (hover background only), children rendered inside
-    else if kind == ``Lean.Doc.Syntax.directive then
-      {{ <span class="verso-directive-wrap">{{renderChildren src args hoverMap info stx}}</span> }}
-    -- Codeblocks: wrapper span (hover background only), children rendered inside
-    else if kind == ``codeblock then
-      {{ <span class="verso-codeblock-wrap">{{renderChildren src args hoverMap info stx}}</span> }}
-    -- Code block string content: tooltip but no special class
-    else if kind == strLitKind && ancestorInfo.map (·.1) == some "verso-codeblock" then
-      match stx.getPos?, stx.getTailPos? with
-      | some start, some stop =>
-        let text : String := start.extract src stop
-        let tip := ancestorInfo.map (·.2) |>.getD ""
-        styledSpan text (some ("verso-codeblock-content", tip))
-      | _, _ => .empty
-    -- Default: recurse into children
-    else renderChildren src args hoverMap info stx
-  | .missing => .empty
-where
-  renderChildren (src : String) (args : Array Syntax)
-      (hoverMap : Std.HashMap String.Pos.Raw String)
-      (ancestorInfo : Option (String × String))
-      (parent : Syntax) : Output.Html := Id.run do
-    let mut parts : Array Output.Html := #[]
-    let mut pos : String.Pos.Raw := parent.getPos?.getD 0
-    for arg in args do
-      match arg.getPos? with
-      | some argStart =>
-        if argStart > pos then
-          parts := parts.push (pos.extract src argStart)
-        parts := parts.push (renderSource src arg hoverMap ancestorInfo)
-        pos := arg.getTailPos?.getD argStart
-      | none => pure ()
-    let endPos := parent.getTailPos?.getD pos
-    if pos < endPos then
-      parts := parts.push (pos.extract src endPos)
-    .seq parts
+      return none
 
 /-- Elaborate Lean source code as commands and return SubVerso-highlighted output. -/
-private def elabAndHighlightLean («show» : Bool) (src : StrLit) : DocElabM (TSyntax `term) := withoutAsync do
+private def elabAndHighlightLean («show» : Bool) (src : VersoCodeBlock) : DocElabM (TSyntax `term) := withoutAsync do
   let scope : Command.Scope := {
     header := "",
     opts := pp.tagAppFns.set (Elab.async.set (← getOptions) false) true,
@@ -273,18 +142,177 @@ private partial def collectCustomHovers (tree : Lean.Elab.InfoTree) :
     result
   | .hole _ => #[]
 
+/-- A map from source positions to the hover text that elaboration attached there. -/
+private abbrev HoverMap := Std.HashMap String.Pos.Raw String
+
+/-- A CSS class together with its default tooltip. -/
+private abbrev Style := String × String
+
+/-- Returns the source text of `stx`, including the whitespace around each of its tokens. -/
+private def tokens (stx : Syntax) : String := stx.reprint.getD ""
+
+/-- Renders the source text of `stx` without styling. -/
+private def plain (stx : Syntax) : Html := .text (tokens stx)
+
 /--
-Parses Verso markup source, render it as syntax-highlighted HTML, and
-elaborate the blocks so the rendered output appears after the source.
+Splits `stx` into the syntax without the whitespace after its last token, and that whitespace.
 -/
-def highlightVersoSource (src : StrLit) : DocElabM (TSyntax `term) := do
-  let srcStr := (← getFileMap).source
-  let pos := src.raw.getPos!
-  let pos' := src.raw.getTailPos? |>.getD srcStr.rawEndPos
-  let pos' := if pos' > srcStr.rawEndPos then srcStr.rawEndPos else pos'
-  have : pos' ≤ srcStr.rawEndPos := by grind
-  let ictx := Parser.mkInputContext srcStr (← getFileName) (endPos := pos') (endPos_valid := by grind)
-  let stx ← Doc.parseStrLit (Verso.Parser.document {}) src
+private def splitTrailing (stx : Syntax) : Syntax × String :=
+  (stx.unsetTrailing, stx.getTrailing?.map (·.toString) |>.getD "")
+
+/--
+Renders `stx` as a span with the class from `style`, followed by the whitespace after it.
+
+The tooltip is the elaborator's hover at the start of `stx` when there is one, and the style's
+tooltip otherwise. It is Markdown, rendered to HTML for the page's tooltip script.
+-/
+private def styled (hovers : HoverMap) (style : Style) (stx : Syntax) : Html :=
+  let (body, trailing) := splitTrailing stx
+  let tip := stx.getPos?.bind (hovers[·]?) |>.getD style.2
+  let tip := (Verso.Output.Html.Markdown.toHtml tip).render
+  .seq #[.element "span" #[("class", style.1), ("data-tooltip", tip)] (.text (tokens body)),
+    .text trailing]
+
+/--
+Renders `stx` with `body` inside a span with class `cls`, followed by the whitespace after it.
+
+`body` receives `stx` without that whitespace.
+-/
+private def wrap (cls : String) (stx : Syntax) (body : Syntax → Html) : Html :=
+  let (inner, trailing) := splitTrailing stx
+  .seq #[.element "span" #[("class", cls)] (body inner), .text trailing]
+
+/-- Renders `stx` with `render` when `view` accepts it, and without styling otherwise. -/
+private def viewOr {k : SyntaxNodeKinds} {α : Type} (view : TSyntax k → Option α) (stx : Syntax)
+    (render : α → Html) : Html :=
+  match view ⟨stx⟩ with
+  | some v => render v
+  | none => plain stx
+
+/-- Renders a text token with the ambient style, if there is one. -/
+private def ambientText (hovers : HoverMap) (ambient : Option Style) (stx : Syntax) : Html :=
+  match ambient with
+  | some style => styled hovers style stx
+  | none => plain stx
+
+private def codeblockTip := "A code block, interpreted according to the name"
+private def directiveTip := "A directive that invokes a registered block extension"
+private def commandTip := "A command that invokes a registered block extension"
+private def roleTip := "A role that invokes a registered inline extension"
+private def linkTip := "Hyperlink"
+private def headerStyle : Style :=
+  ("verso-header", "A section header that creates document structure")
+
+/-- Renders the arguments to a code block, directive, command, or role. -/
+private def renderArg (hovers : HoverMap) (arg : TSyntax ``Lean.Doc.Parser.arg) : Html :=
+  match ArgView.of arg with
+  | some (.anon _ val) => value val
+  | some (.named _ parens name assign val) =>
+    .seq #[
+      parens.elim .empty (plain ·.1),
+      styled hovers ("verso-ext-name", "Named argument") name,
+      plain assign,
+      value val,
+      parens.elim .empty (plain ·.2)
+    ]
+  | some (.flag stx _ _ isOn) =>
+    styled hovers ("verso-flag", if isOn then "Boolean flag (on)" else "Boolean flag (off)") stx
+  | none => plain arg
+where
+  value (val : TSyntax ``Lean.Doc.Parser.argVal) : Html :=
+    let tip := match ArgValView.of val with
+      | some (.str ..) => "String argument"
+      | some (.name ..) => "Named argument"
+      | some (.num ..) => "Numeric argument"
+      | none => ""
+    styled hovers ("verso-arg", tip) val
+
+/--
+Renders an inline element.
+
+Plain text inside the element takes the `ambient` style.
+-/
+private partial def renderInline (hovers : HoverMap) (ambient : Option Style)
+    (inl : VersoInline) : Html :=
+  match InlineView.of inl with
+  | some (.text v) => ambientText hovers ambient v.stx
+  | some (.emph v) => styled hovers ("verso-emph", "Emphasis, rendered as italics") v.stx
+  | some (.bold v) => styled hovers ("verso-bold", "Bold, rendered as strong text") v.stx
+  | some (.code v) => styled hovers ("verso-code", "Inline code, rendered as monospace") v.stx
+  | some (.math v) =>
+    let tip := match v.mode with
+      | .inline => "Inline math, rendered with KaTeX"
+      | .display => "Display math, rendered with KaTeX"
+    styled hovers ("verso-math", tip) v.stx
+  | some (.link v) => wrap "verso-link-wrap" v.stx fun s => viewOr LinkView.of s fun v =>
+    let delim := styled hovers ("verso-link-delim", linkTip)
+    let linkStyle := some ("verso-link", linkTip)
+    let target := match v.target with
+      | .url _ o url c => #[delim o, ambientText hovers linkStyle url, delim c]
+      | .ref _ o name c => #[delim o, ambientText hovers linkStyle name, delim c]
+    .seq <| #[delim v.opener] ++ v.content.map (renderInline hovers linkStyle) ++
+      #[delim v.closer] ++ target
+  | some (.image v) => styled hovers ("verso-image", "Image") v.stx
+  | some (.footnote v) => styled hovers ("verso-footnote-ref", "Footnote reference") v.stx
+  | some (.role v) => wrap "verso-role-wrap" v.stx fun s => viewOr RoleView.of s fun v =>
+    let delim := styled hovers ("verso-role-delim", roleTip)
+    let roleStyle := some ("verso-role", roleTip)
+    let (opener, closer) := match v.brackets with
+      | some (o, c) => (ambientText hovers roleStyle o, ambientText hovers roleStyle c)
+      | none => (.empty, .empty)
+    .seq <| #[delim v.braceOpen, styled hovers ("verso-ext-name", roleTip) v.name] ++
+      v.args.map (renderArg hovers) ++ #[delim v.braceClose, opener] ++
+      v.content.map (renderInline hovers roleStyle) ++ #[closer]
+  | some (.linebreak v) => plain v.stx
+  | none => plain inl
+
+/--
+Renders a block element.
+
+Plain text inside the block takes the `ambient` style.
+-/
+private partial def renderBlock (hovers : HoverMap) (ambient : Option Style)
+    (blk : VersoBlock) : Html :=
+  let inlines (xs : Array VersoInline) (style := ambient) :=
+    Html.seq (xs.map (renderInline hovers style))
+  let blocks (xs : Array VersoBlock) (style := ambient) :=
+    Html.seq (xs.map (renderBlock hovers style))
+  match BlockView.of blk with
+  | some (.para v) => inlines v.content
+  | some (.ul v) => .seq <| v.items.map fun item => .seq #[plain item.marker, blocks item.contents]
+  | some (.ol v) => .seq <| v.items.map fun item => .seq #[plain item.marker, blocks item.contents]
+  | some (.dl v) =>
+    .seq <| v.items.map fun item => .seq #[plain item.marker, inlines item.term, blocks item.desc]
+  | some (.blockquote v) => styled hovers ("verso-blockquote", "Block quote") v.stx
+  | some (.codeblock v) =>
+    wrap "verso-codeblock-wrap" v.stx fun s => viewOr CodeBlockView.of s fun v =>
+    let fence := styled hovers ("verso-codeblock-fence", codeblockTip)
+    let name := v.name?.elim .empty (styled hovers ("verso-ext-name", codeblockTip) ·)
+    .seq <| #[fence v.openFence, name] ++ v.args.map (renderArg hovers) ++
+      #[styled hovers ("verso-codeblock-content", codeblockTip) v.content, fence v.closeFence]
+  | some (.directive v) =>
+    wrap "verso-directive-wrap" v.stx fun s => viewOr DirectiveView.of s fun v =>
+    let delim := styled hovers ("verso-directive-delim", directiveTip)
+    .seq <| #[delim v.opener, styled hovers ("verso-ext-name", directiveTip) v.name] ++
+      v.args.map (renderArg hovers) ++ #[blocks v.content (style := none), delim v.closer]
+  | some (.command v) =>
+    let delim := styled hovers ("verso-role-delim", commandTip)
+    .seq <| #[delim v.braceOpen, styled hovers ("verso-ext-name", commandTip) v.name] ++
+      v.args.map (renderArg hovers) ++ #[delim v.braceClose]
+  | some (.header v) =>
+    .seq #[ambientText hovers headerStyle v.marker, inlines v.content (style := headerStyle)]
+  | some (.linkRef v) => styled hovers ("verso-link-ref", "Link reference") v.stx
+  | some (.footnoteRef v) => styled hovers ("verso-footnote", "Footnote definition") v.stx
+  | some (.metadata v) => styled hovers ("verso-metadata", "Metadata block") v.stx
+  | none => plain blk
+
+/--
+Parses Verso markup source, renders it as syntax-highlighted HTML, and elaborates its blocks.
+
+The rendered output appears after the highlighted source.
+-/
+def highlightVersoSource (src : VersoCodeBlock) : DocElabM (TSyntax `term) := do
+  let stx ← parseStrLitWith (Verso.Parser.document {}) src
 
   -- Elaborate the blocks for rendered output, tracking new info tree entries
   let numTreesBefore := (← getInfoState).trees.size
@@ -297,8 +325,9 @@ def highlightVersoSource (src : StrLit) : DocElabM (TSyntax `term) := do
   for i in [numTreesBefore:infoState.trees.size] do
     for entry in collectCustomHovers infoState.trees[i]! do
       hoverMap := hoverMap.insert entry.1 entry.2
-  let highlighted := renderSource (← getFileMap).source stx hoverMap
-  let sourceHtml := {{ <pre class="verso-source"><code>{{highlighted}}</code></pre> }}
+  let highlighted := Html.seq <| stx.getArgs.map (renderBlock hoverMap none ⟨·⟩)
+  let sourceHtml : Html :=
+    .element "pre" #[("class", "verso-source")] (.element "code" #[] highlighted)
   let blobId := mkIdent ``Verso.Genre.Blog.BlockExt.blob
   let sourceBlock ← ``(Block.other ($blobId $(quote sourceHtml)) #[])
   let sourcePanel ←
@@ -325,9 +354,9 @@ end
 
 block_component theoremC (name : String) where
   toHtml _ _ _ go contents := do
-    return {{
-      <div class="theorem"><div class="theorem-name">{{name}}</div>{{ ← contents.mapM go }}</div>
-    }}
+    return html%{
+      <div class="theorem"><div class="theorem-name">{name}</div>{← contents.mapM go}</div>
+    }
 
 /--
 Indicates a named theorem.

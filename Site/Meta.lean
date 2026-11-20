@@ -28,7 +28,7 @@ end
 open Verso Output Html in
 inline_component Inline.lightbox (alt thumb full : String) where
   toHtml _ _ _ _ := do
-    return {{<a href={{full}} class="glightbox"><img src={{thumb}} alt={{alt}}/></a>}}
+    return html%{<a href={full} class="glightbox"><img src={thumb} alt={alt}/></a>}
 
 @[role]
 def lightbox : RoleExpanderOf LightboxArgs

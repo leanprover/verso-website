@@ -1,0 +1,12 @@
+# Configuration for previewing the site locally with `lake exe verso-serve`.
+banner = "Verso website preview. Run `lake exe generate-site` to rebuild."
+
+[[mounts]]
+path = "/"
+dir = "_site"
+
+# Netlify serves the Verso manual under /doc (see netlify.toml).
+[[redirects]]
+from = "/doc"
+to = "https://verso-manual-versions.netlify.app"
+status = 302

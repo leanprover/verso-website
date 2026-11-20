@@ -16,6 +16,7 @@ open Verso.Output Html
 open Lean
 open Verso.Multi
 open Verso.Genre.Blog
+open Lean.Doc (VersoInline InlineView)
 
 namespace Site
 
@@ -39,19 +40,17 @@ inline_component tacticRef (name : String) where
     let remotes := (← get).remoteContent
     if let some url := findTacticUrl remotes name then
       let html : Output.Html :=
-        {{ <code class="hl lean"><a href={{url}}><span class="keyword">{{name}}</span></a></code> }}
+        html%{<code class="hl lean"><a href={url}><span class="keyword">{name}</span></a></code>}
       return some (Inline.other (InlineExt.blob html) #[])
     else
       return none
   toHtml _id _json goI contents := do
-    pure {{ <code class="hl lean"><span class="keyword">{{← contents.mapM goI}}</span></code> }}
+    pure html%{<code class="hl lean"><span class="keyword">{← contents.mapM goI}</span></code>}
 
 /-- Extract text from inline code syntax. -/
-private def getCodeText (stxs : TSyntaxArray `inline) : Option String := do
-  let stx ← stxs[0]?
-  let raw := stx.raw
-  guard (raw.getKind == ``Lean.Doc.Syntax.code)
-  raw.getArg 1 |>.isStrLit?
+private def getCodeText (stxs : Array VersoInline) : Option String := do
+  let .code v ← InlineView.of (← stxs[0]?) | none
+  return v.getVersoCode
 
 @[role]
 def tactic : RoleExpanderOf Unit

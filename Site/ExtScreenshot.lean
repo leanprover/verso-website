@@ -30,7 +30,7 @@ inline_component Inline.kbd (keySequence : Array String) where
   ]
   toHtml _ _ _ _ := do
     let key (k : String) :=
-      {{<kbd>{{k}}</kbd>}}
+      html%{<kbd>{k}</kbd>}
     match keySequence with
     | #[k] => return key k
     | ks =>
@@ -46,8 +46,7 @@ def kbd : RoleExpanderOf NoArgs
   | {}, inlines => do
     let code ← codeSeq inlines
     if code.size < 1 then throwError "Expected one or more code inlines"
-    let keys := code.map (·.getString)
-    `(Inline.kbd $(quote keys) #[])
+    `(Inline.kbd $(quote code) #[])
 
 #doc (Page) "Integration" =>
 
