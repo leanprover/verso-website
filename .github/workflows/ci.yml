@@ -6,6 +6,12 @@ on:
     pull_request:
     merge_group:
 
+# The deploy step records a GitHub deployment and a commit status for a push to main.
+permissions:
+    contents: read
+    deployments: write
+    statuses: write
+
 jobs:
     build:
         name: Build and generate HTML
@@ -14,7 +20,9 @@ jobs:
             # Used for browser tests. Placing them here allows caching to work right.
             PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
         steps:
-            - uses: actions/checkout@v6.1.0
+            - uses: actions/checkout@v7.0.1
+              with:
+                  persist-credentials: false
 
             - parallel:
                   - name: Install uv
@@ -95,7 +103,7 @@ jobs:
 
             - name: Deploy to Netlify
               id: deploy
-              uses: nwtgck/actions-netlify@v3.0.0
+              uses: nwtgck/actions-netlify@v4.0.0
               if: github.event_name == 'push' && github.ref_name == 'main'
               with:
                   publish-dir: _site

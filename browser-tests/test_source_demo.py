@@ -82,7 +82,9 @@ class TestHighlighting:
         assert texts
         for text in texts:
             assert text == text.rstrip(" \n"), f"Trailing whitespace in {text!r}"
-        contents = page.locator(".verso-source .verso-codeblock-content").all_text_contents()
+        contents = page.locator(
+            ".verso-source .verso-codeblock-content"
+        ).all_text_contents()
         assert contents
         for text in contents:
             assert text.endswith("\n") and not text.endswith("\n\n"), repr(text)
@@ -119,7 +121,9 @@ class TestTooltips:
         )
         total, initialized = counts
         assert total > 0, "Expected elements with tooltips"
-        assert initialized == total, f"Only {initialized} of {total} have Tippy instances"
+        assert initialized == total, (
+            f"Only {initialized} of {total} have Tippy instances"
+        )
 
     def test_default_tooltip(self, server: str, page: Page):
         """Markup without an elaborator hover shows the tooltip for its kind."""

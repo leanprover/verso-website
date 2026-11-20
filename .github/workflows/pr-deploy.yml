@@ -1,5 +1,13 @@
 name: Deploy PR Preview
 
+# Publishes the site that CI built for a pull request as a Netlify preview.
+#
+# The file is the same in every repository. What differs is supplied by convention:
+# - the workflow that builds the site is named "CI",
+# - it uploads the site as an artifact named "site-for-deploy",
+# - the repository variable NETLIFY_SITE_ID holds the id of the Netlify site,
+# - the repository secret NETLIFY_AUTH_TOKEN holds the Netlify token.
+
 on:
     workflow_run:
         workflows: ["CI"]
@@ -20,10 +28,10 @@ jobs:
         # Only run when:
         # - The triggering workflow succeeded
         # - The triggering event was a pull_request
-        # - We're in the official repository (not a fork)
+        # - We're in a repository of the leanprover organization (not a fork)
         if: >
             github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event ==
-            'pull_request' && github.repository == 'leanprover/verso-website'
+            'pull_request' && github.repository_owner == 'leanprover'
         steps:
             # This workflow can use repository secrets, so it runs after PR CI
             # instead of directly on pull_request. It deploys the CI artifact
@@ -108,9 +116,9 @@ jobs:
                   name: site-for-deploy
                   path: site
 
-            # A pull request's site is a preview, and only a push to main publishes the
-            # production site. Under workflow_run, the ref of this job is always main, so the
-            # deployment is marked as a preview here and no production branch is named.
+            # A pull request's site is a preview. Under workflow_run, the ref of this job is
+            # always main, so the step marks the deployment as a preview and doesn't designate a
+            # production branch.
             - name: Deploy to Netlify
               id: netlify
               uses: nwtgck/actions-netlify@v4.0.0
@@ -131,7 +139,7 @@ jobs:
                   fails-without-credentials: true
               env:
                   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-                  NETLIFY_SITE_ID: "ffb7148a-a950-4fd1-9f49-758a8416bdbb"
+                  NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
 
             # The deployment should point at the PR test/merge SHA when
             # available, not the default-branch SHA of this workflow_run job.
@@ -173,7 +181,7 @@ jobs:
                         auto_merge: false,
                         required_contexts: [],
                         environment,
-                        description: `Verso website preview for ${environment}`,
+                        description: `Site preview for ${environment}`,
                         transient_environment: true,
                         production_environment: false,
                       });

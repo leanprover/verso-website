@@ -5,13 +5,16 @@ on:
         types: [opened, edited, reopened]
     merge_group:
 
+permissions:
+    contents: read
+
 jobs:
     check-pr-title:
         name: PR title follows commit convention
         runs-on: ubuntu-latest
         steps:
             - name: Check PR title
-              uses: actions/github-script@v8.0.0
+              uses: actions/github-script@v9.0.0
               with:
                   script: |
                       let title;

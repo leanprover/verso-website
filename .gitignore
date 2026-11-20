@@ -4,6 +4,7 @@ lake-manifest.json
 html/
 _site/
 .verso/
+node_modules/
 
 # Browser tests
 browser-tests/.venv/
