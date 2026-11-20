@@ -10,7 +10,7 @@ jobs:
         name: Check for "nightly" in lean-toolchain
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v6.1.0
 
             - name: Check whether lean-toolchain contains nightly
               run: |

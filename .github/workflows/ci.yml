@@ -18,14 +18,14 @@ jobs:
                   ./elan-init -y --default-toolchain none
                   echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v6.1.0
 
             - name: Compute short SHA
               id: shortSHA
               run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
             - name: Cache .lake
-              uses: actions/cache@v5
+              uses: actions/cache@v5.1.0
               with:
                   path: .lake
                   key:
@@ -44,14 +44,14 @@ jobs:
               run: lake exe generate-site
 
             - name: Upload site artifact
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@v7.0.2
               with:
                   name: site
                   path: _site
 
             - name: Upload site for PR deployment
               if: github.event_name == 'pull_request'
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@v7.0.2
               with:
                   name: site-for-deploy
                   path: _site
@@ -66,7 +66,7 @@ jobs:
 
             - name: Deploy to Netlify
               id: deploy
-              uses: nwtgck/actions-netlify@v3.0
+              uses: nwtgck/actions-netlify@v3.0.0
               if: github.event_name == 'push' && github.ref_name == 'main'
               with:
                   publish-dir: _site
