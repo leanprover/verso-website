@@ -17,6 +17,7 @@ import Verso.Parser
 import Verso.Output.Html
 import Lean.Elab.Command
 import SubVerso.Highlighting
+import Verso.Output.Html.Markdown
 
 open Verso Doc Elab
 open Verso.Output Html
@@ -163,11 +164,12 @@ private def splitTrailing (stx : Syntax) : Syntax × String :=
 Renders `stx` as a span with the class from `style`, followed by the whitespace after it.
 
 The tooltip is the elaborator's hover at the start of `stx` when there is one, and the style's
-tooltip otherwise.
+tooltip otherwise. It is Markdown, rendered to HTML for the page's tooltip script.
 -/
 private def styled (hovers : HoverMap) (style : Style) (stx : Syntax) : Html :=
   let (body, trailing) := splitTrailing stx
   let tip := stx.getPos?.bind (hovers[·]?) |>.getD style.2
+  let tip := (Verso.Output.Html.Markdown.toHtml tip).render
   .seq #[.element "span" #[("class", style.1), ("data-tooltip", tip)] (.text (tokens body)),
     .text trailing]
 
