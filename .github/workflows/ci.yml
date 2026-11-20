@@ -16,15 +16,6 @@ jobs:
         steps:
             - uses: actions/checkout@v6.1.0
 
-            # The browser test tools install in the background while Lean builds the site.
-            - name: Install uv
-              id: uv
-              uses: astral-sh/setup-uv@v10.3.3
-              background: true
-              with:
-                  enable-cache: true
-                  cache-dependency-glob: "browser-tests/pyproject.toml"
-
             - name: Install elan
               run: |
                   set -o pipefail
@@ -52,27 +43,16 @@ jobs:
                   path: .playwright-browsers
                   key: playwright-${{ runner.os }}-${{ hashFiles('browser-tests/uv.lock') }}
 
-            # Installing the browsers needs uv on the path, which the wait provides.
-            - name: Wait for uv
-              wait: uv
+            # The browser test tools install while Lean builds the site.
+            - parallel:
+                  - name: Install browser test tools
+                    uses: ./.github/actions/browser-test-tools
 
-            - name: Install Playwright browsers
-              id: playwright
-              background: true
-              run: |
-                  uv run --project browser-tests --extra test playwright install chromium firefox --with-deps
-
-            - name: Lean version
-              run: lean --version
-
-            - name: Build
-              run: lake build
-
-            - name: Generate HTML
-              run: lake exe generate-site
-
-            - name: Wait for Playwright browsers
-              wait: playwright
+                  - name: Build and generate HTML
+                    run: |
+                        lean --version
+                        lake build
+                        lake exe generate-site
 
             - name: Run browser tests
               run: |
