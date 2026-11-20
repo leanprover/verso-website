@@ -14,14 +14,23 @@ jobs:
             # Used for browser tests. Placing them here allows caching to work right.
             PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
         steps:
+            - uses: actions/checkout@v6.1.0
+
+            # The browser test tools install in the background while Lean builds the site.
+            - name: Install uv
+              id: uv
+              uses: astral-sh/setup-uv@v10.3.3
+              background: true
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "browser-tests/pyproject.toml"
+
             - name: Install elan
               run: |
                   set -o pipefail
-                  curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
-                  ./elan-init -y --default-toolchain none
+                  curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$RUNNER_TEMP"
+                  "$RUNNER_TEMP/elan-init" -y --default-toolchain none
                   echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
-
-            - uses: actions/checkout@v6.1.0
 
             - name: Compute short SHA
               id: shortSHA
@@ -37,6 +46,22 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-${{ hashFiles('lake-manifest.json') }}-${{ hashFiles('lean-toolchain') }}-
 
+            - name: Cache Playwright browsers
+              uses: actions/cache@v5.1.0
+              with:
+                  path: .playwright-browsers
+                  key: playwright-${{ runner.os }}-${{ hashFiles('browser-tests/uv.lock') }}
+
+            # Installing the browsers needs uv on the path, which the wait provides.
+            - name: Wait for uv
+              wait: uv
+
+            - name: Install Playwright browsers
+              id: playwright
+              background: true
+              run: |
+                  uv run --project browser-tests --extra test playwright install chromium firefox --with-deps
+
             - name: Lean version
               run: lean --version
 
@@ -46,21 +71,8 @@ jobs:
             - name: Generate HTML
               run: lake exe generate-site
 
-            - name: Install uv
-              uses: astral-sh/setup-uv@v10.3.3
-              with:
-                  enable-cache: true
-                  cache-dependency-glob: "browser-tests/pyproject.toml"
-
-            - name: Cache Playwright browsers
-              uses: actions/cache@v5.1.0
-              with:
-                  path: .playwright-browsers
-                  key: playwright-${{ runner.os }}-${{ hashFiles('browser-tests/uv.lock') }}
-
-            - name: Install Playwright browsers
-              run: |
-                  uv run --project browser-tests --extra test playwright install chromium firefox --with-deps
+            - name: Wait for Playwright browsers
+              wait: playwright
 
             - name: Run browser tests
               run: |
