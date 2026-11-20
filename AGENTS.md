@@ -6,3 +6,5 @@
   `_site`.
 
 - HTML needs to be served with a local web server to work correctly.
+  Run `lake exe verso-serve` to serve `_site` as configured in
+  `verso-serve.toml`.

@@ -24,8 +24,11 @@ The output is written to `_site/`. Serve it with a local web server to
 view correctly:
 
 ```sh
-cd _site && python3 -m http.server
+lake exe verso-serve
 ```
+
+The server reads its configuration from
+[`verso-serve.toml`](verso-serve.toml) and prints the address to open.
 
 ## Deployment
 
