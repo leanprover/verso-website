@@ -3,6 +3,13 @@ lake-packages/
 lake-manifest.json
 html/
 _site/
+.verso/
+
+# Browser tests
+browser-tests/.venv/
+.pytest_cache/
+__pycache__/
+.playwright-browsers/
 .DS_Store
 
 # Local Netlify folder

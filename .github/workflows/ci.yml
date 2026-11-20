@@ -10,6 +10,9 @@ jobs:
     build:
         name: Build and generate HTML
         runs-on: ubuntu-latest
+        env:
+            # Used for browser tests. Placing them here allows caching to work right.
+            PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
         steps:
             - name: Install elan
               run: |
@@ -42,6 +45,26 @@ jobs:
 
             - name: Generate HTML
               run: lake exe generate-site
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v10.3.3
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "browser-tests/pyproject.toml"
+
+            - name: Cache Playwright browsers
+              uses: actions/cache@v5.1.0
+              with:
+                  path: .playwright-browsers
+                  key: playwright-${{ runner.os }}-${{ hashFiles('browser-tests/uv.lock') }}
+
+            - name: Install Playwright browsers
+              run: |
+                  uv run --project browser-tests --extra test playwright install chromium firefox --with-deps
+
+            - name: Run browser tests
+              run: |
+                  uv run --project browser-tests --extra test pytest browser-tests -v
 
             - name: Upload site artifact
               uses: actions/upload-artifact@v7.0.2
